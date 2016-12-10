@@ -103,9 +103,9 @@ var runAdvent09 = function() {
   var charCount = 0;
   var charCount2 = 0;
   for (var i=0; i<input.length; i++) {
-    charCount += decompressedLengthOnePass(input[i]);
     debugger;
-    //charCount2 += decompressedLengthMultiplePass(input[i]);
+    charCount += decompressedLengthOnePass(input[i]);
+    charCount2 += decompressedLengthMultiplePass(input[i]);
   console.log(charCount);
   console.log(charCount2);
   }
