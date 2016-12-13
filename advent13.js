@@ -1,19 +1,66 @@
-var bfs = require('./bfs');
+////////////////////////
+///// INPUT     ////////
+////////////////////////
 
-var hammingWeight = function(v) {
-  v = v - ((v>>1) & 0x55555555);
-  v = (v & 0x33333333) + ((v>>2) & 0x33333333);
-  return ((v + (v>>4) & 0xF0F0F0F) * 0x1010101) >> 24;
-};
-
-var width = 40;
-var height = 40;
+var width = 50;
+var height = 50;
 
 var favoriteNumber = 1362;
 
 var start = [1, 1];
 
 var end = [31, 39];
+
+////////////////////////
+///// UTILITIES ////////
+////////////////////////
+
+// Helper function for BFS
+var buildPath = function(parents, targetNode) {
+  var result = [targetNode];
+  while (parents[targetNode] !== null) {
+    targetNode = parents[targetNode];
+    result.push(targetNode);
+  }
+  return result;
+};
+
+// BFS:
+//   input adjacency matrix and startNode
+//   output map of shortest path for each node that has a valid path from startNode
+var bfs = function (adjMatrix, start) {
+  var parents = [];
+  var q = [];
+  var v = [];
+  var current;
+  var lengthmap = {};
+  q.push(start);
+  parents[start] = null;
+  v[start] = true;
+  while (q.length) {
+    current = q.shift();
+    lengthmap["" + current] = buildPath(parents, current);
+    for (var i = 0; i < adjMatrix.length; i += 1) {
+      if (i !== current && adjMatrix[current][i] && !v[i]) {
+        parents[i] = current;
+        v[i] = true;
+        q.push(i);
+      }
+    }
+  }
+  return lengthmap;
+};
+
+// Number of bits set in an integer
+var hammingWeight = function(v) {
+  v = v - ((v>>1) & 0x55555555);
+  v = (v & 0x33333333) + ((v>>2) & 0x33333333);
+  return ((v + (v>>4) & 0xF0F0F0F) * 0x1010101) >> 24;
+};
+
+//////////////////////////
+///// MAP FUNCTIONS //////
+//////////////////////////
 
 var nodeIdFromXY = function(v) {
   return width*v[1] + v[0];
@@ -32,18 +79,30 @@ var isWall = function(x, y) {
 };
 
 
-var printMap = function() {
+var printMap = function(start,end,path) {
   for (var j=0; j<height; j++) {
     s = '';
     for (var i=0; i<width; i++) {
-      if (start === [i,j]) {
+      if (start[0] === i && start[1] === j) {
         s = s + 'S';
-      } else if (end === [i,j]) {
+      } else if (end[0] === i && end[1] === j) {
         s = s + 'E';
       } else if (isWall(i,j)) {
-        s = s + '#';
-      } else {
         s = s + '.';
+      } else {
+        var inPath = false;
+        var pathLength = path ? path.length : 0;
+        for (var k=0; k<pathLength; k++) {
+          if (path[k] === nodeIdFromXY([i,j])) {
+            inPath = true;
+            break;
+          }
+        }
+        if (inPath) {
+          s = s + '#';
+        } else {
+          s = s + ' ';
+        }
       }
     }
     console.log(s);
@@ -76,24 +135,24 @@ var adjacencyMatrix = function() {
   return a;
 };
 
+////////////////////////
+///// SOLUTION  ////////
+////////////////////////
+
+
+var lengthmap = bfs(adjacencyMatrix(), nodeIdFromXY(start));
+
+printMap(start, end, lengthmap["" + nodeIdFromXY(end)]);
+
 console.log('Part 1:');
-
-var path = bfs(adjacencyMatrix(), nodeIdFromXY(start), nodeIdFromXY(end));
-
-console.log(path.length - 1);
+console.log(lengthmap["" + nodeIdFromXY(end)].length - 1);
 
 console.log('Part 2:');
-
 var count = 0;
 for (var i=0; i<height*width; i++) {
-  if(!isWall([XFromNodeId(i),YFromNodeId(i)])) {
-    var spath = bfs(adjacencyMatrix(), nodeIdFromXY(start), i);
-    if (spath && spath.length <= 51) {
-      count++;
-    }
+  if(lengthmap["" + i] !== undefined && lengthmap["" + i].length <= 51) {
+    count++;
   }
 }
 console.log(count);
-
-
 
