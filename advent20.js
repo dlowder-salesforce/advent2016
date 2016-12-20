@@ -49,7 +49,7 @@
       }
       var merged = mergeIntervals(intervals);
 
-      // Part 1
+      // Part 1: first allowed IP
       for (i=0; i<merged.length-1; i++) {
         if (merged[i][1]+1 < merged[i+1][0]) {
           console.log(merged[i][1] + 1);
@@ -57,10 +57,10 @@
         }
       }
 
-      // Part 2
+      // Part 2: total number of allowed IPs
       var allowed_ips = 0;
-      if(merged[0][0] > 1) {
-        allowed_ips += merged[0][0] - 1;
+      if(merged[0][0] > 0) {
+        allowed_ips += merged[0][0];
       }
       for (i=0; i<merged.length-1; i++) {
         allowed_ips += merged[i+1][0] - merged[i][1] - 1;
