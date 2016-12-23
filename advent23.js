@@ -1,31 +1,16 @@
-var input = [
-  "cpy a b",
-  "dec b",
-  "cpy a d",
-  "cpy 0 a",
-  "cpy b c",
-  "inc a",
-  "dec c",
-  "jnz c -2",
-  "dec d",
-  "jnz d -5",
-  "dec b",
-  "cpy b c",
-  "cpy c d",
-  "dec d",
-  "inc c",
-  "jnz d -2",
-  "tgl c",
-  "cpy -16 c",
-  "jnz 1 c",
-  "cpy 83 c",
-  "jnz 78 d",
-  "inc a",
-  "inc d",
-  "jnz d -2",
-  "inc c",
-  "jnz c -5"
-];
+input = [];
+    
+var lineReader = require('readline').createInterface({
+  input: require('fs').createReadStream('./input23-optimized.txt')
+});
+    
+lineReader.on('line', function (line) {
+  input.push(line.split(' '));
+});
+    
+lineReader.on('close', function () {
+  runAdvent23();
+});
 
 // input = [
 //   "cpy 2 a",
@@ -41,7 +26,7 @@ var registers = {'a':0, 'b':0, 'c':0, 'd':0};
 
 var executeInstruction = function(s,i) {
   var v, u;
-  var tokens = s.split(' ');
+  var tokens = s;
   if (tokens[0] === 'cpy') {
     v = parseInt(tokens[1]);
     u = parseInt(tokens[2]);
@@ -54,6 +39,20 @@ var executeInstruction = function(s,i) {
     } else {
       registers[tokens[2]] = registers[tokens[1]];
     }
+    return i + 1;
+  }
+  if (tokens[0] === 'add') {
+    if (tokens.length > 3) {
+      registers[tokens[1]] += registers[tokens[2]]*registers[tokens[3]];
+      registers[tokens[2]] = 0;
+      registers[tokens[3]] = 0;
+    } else {
+      registers[tokens[1]] += registers[tokens[2]];
+      registers[tokens[2]] = 0;
+    }
+    return i + 1;
+  }
+  if (tokens[0] === 'nop') {
     return i + 1;
   }
   if (tokens[0] === 'inc') {
@@ -76,9 +75,6 @@ var executeInstruction = function(s,i) {
     if (v === 0) {
       return i + 1;
     } else {
-      if (tokens[1] === '1') {
-        debugger;
-      }
       return i + u;
     }
   }
@@ -91,8 +87,7 @@ var executeInstruction = function(s,i) {
     if (v < 0 || v >= input.length) {
       return i + 1;
     }
-    var instructionToChange = input[v];
-    tokens = instructionToChange.split(" ");
+    tokens = input[v];
     if (tokens[0] === 'inc') {
       tokens[0] = 'dec';
     }
@@ -108,20 +103,16 @@ var executeInstruction = function(s,i) {
     else if (tokens[0] === 'cpy') {
       tokens[0] = 'jnz';
     }
-    input[v] = tokens.join(' ');
     return i + 1;
   }
 
 };
 var runAdvent23 = function() {
   var n = 0;
-  registers.a = 4;
+  registers.a = 12;
   while (n < input.length) {
-    //console.log(input[n]);
     n = executeInstruction(input[n],n);
-    //console.log('n: ' + n + '; registers = ' + registers.a + ' ' + registers.b + ' ' + registers.c + ' ' + registers.d);
   }
   console.log(registers);
 };
 
-runAdvent23();

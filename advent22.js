@@ -1,19 +1,18 @@
-
-    input = [];
+input = [];
     
-    var lineReader = require('readline').createInterface({
-      input: require('fs').createReadStream('./input22.txt')
-    });
+var lineReader = require('readline').createInterface({
+  input: require('fs').createReadStream('./input22.txt')
+});
     
-    lineReader.on('line', function (line) {
-      if (line.indexOf('/dev') === 0) {
-        input.push(line);
-      }
-    });
+lineReader.on('line', function (line) {
+  if (line.indexOf('/dev') === 0) {
+    input.push(line);
+  }
+});
     
-    lineReader.on('close', function () {
-      runAdvent22();
-    });
+lineReader.on('close', function () {
+  runAdvent22();
+});
 
 var runAdvent22 = function() {
   var i, j;
