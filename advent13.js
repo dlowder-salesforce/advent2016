@@ -1,3 +1,5 @@
+var bfs = require('./bfs');
+
 ////////////////////////
 ///// INPUT     ////////
 ////////////////////////
@@ -14,42 +16,6 @@ var end = [31, 39];
 ////////////////////////
 ///// UTILITIES ////////
 ////////////////////////
-
-// Helper function for BFS
-var buildPath = function(parents, targetNode) {
-  var result = [targetNode];
-  while (parents[targetNode] !== null) {
-    targetNode = parents[targetNode];
-    result.push(targetNode);
-  }
-  return result;
-};
-
-// BFS:
-//   input adjacency matrix and startNode
-//   output map of shortest path for each node that has a valid path from startNode
-var bfs = function (adjMatrix, start) {
-  var parents = [];
-  var q = [];
-  var v = [];
-  var current;
-  var lengthmap = {};
-  q.push(start);
-  parents[start] = null;
-  v[start] = true;
-  while (q.length) {
-    current = q.shift();
-    lengthmap["" + current] = buildPath(parents, current);
-    for (var i = 0; i < adjMatrix.length; i += 1) {
-      if (i !== current && adjMatrix[current][i] && !v[i]) {
-        parents[i] = current;
-        v[i] = true;
-        q.push(i);
-      }
-    }
-  }
-  return lengthmap;
-};
 
 // Number of bits set in an integer
 var hammingWeight = function(v) {
@@ -139,15 +105,17 @@ var adjacencyMatrix = function() {
 ///// SOLUTION  ////////
 ////////////////////////
 
-
-var lengthmap = bfs(adjacencyMatrix(), nodeIdFromXY(start));
-
-printMap(start, end, lengthmap["" + nodeIdFromXY(end)]);
+var am = adjacencyMatrix();
 
 console.log('Part 1:');
-console.log(lengthmap["" + nodeIdFromXY(end)].length - 1);
+var path = bfs(am, nodeIdFromXY(start), nodeIdFromXY(end));
+printMap(start, end, path);
+
+console.log(path.length - 1);
+
 
 console.log('Part 2:');
+var lengthmap = bfs(am, nodeIdFromXY(start));
 var count = 0;
 for (var i=0; i<height*width; i++) {
   if(lengthmap["" + i] !== undefined && lengthmap["" + i].length <= 51) {
