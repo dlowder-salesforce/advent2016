@@ -28,7 +28,7 @@ var startposition = [1,1];
 //     D
 
 
-keymap = { 
+keymap = {
             '24': '1',
             '13': '2',
             '23': '3',

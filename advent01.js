@@ -24,7 +24,7 @@ for (var i=0; i<steps.length; i++) {
   }
   if (idirection < 0) {
     idirection += 4;
-  } 
+  }
   if (idirection > 3) {
     idirection -= 4;
   }

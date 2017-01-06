@@ -1,79 +1,172 @@
-/**
- * test input
- *
-The first floor contains a hydrogen-compatible microchip and a lithium-compatible microchip.
-The second floor contains a hydrogen generator.
-The third floor contains a lithium generator.
-The fourth floor contains nothing relevant.
- */
+'use strict';
 
-/**
- * real input
-The first floor contains a thulium generator, a thulium-compatible microchip, a plutonium generator, and a strontium generator.
-The second floor contains a plutonium-compatible microchip and a strontium-compatible microchip.
-The third floor contains a promethium generator, a promethium-compatible microchip, a ruthenium generator, and a ruthenium-compatible microchip.
-The fourth floor contains nothing relevant.
- */
-
-const Heap = require('heap');
-const Combinatorics = require('js-combinatorics');
-
-Array.prototype.sortByNumber = function() {
-  return this.sort(function(a,b) {return b<a;});
-};
-
-var thulium = 1,
-    plutonium = 2,
-    strontium = 3,
-    promethium = 4,
-    ruthenium = 5,
-    hydrogen = 6,
-    lithium = 7;
-
-var initialState = [
-  [thulium, -thulium, plutonium, strontium].sortByNumber(),
-  [-plutonium, -strontium].sortByNumber(),
-  [promethium, -promethium, ruthenium, -ruthenium].sortByNumber(),
-  []
+var input = [
+  "The first floor contains a thulium generator, a thulium-compatible microchip, a plutonium generator, and a strontium generator.",
+  "The second floor contains a plutonium-compatible microchip and a strontium-compatible microchip.",
+  "The third floor contains a promethium generator, a promethium-compatible microchip, a ruthenium generator, and a ruthenium-compatible microchip.",
+  "The fourth floor contains nothing relevant."
 ];
 
-console.log(initialState);
+var parse = function(input) {
+  let floors = input.map(line => {
+    return line.split('contains ')[1].split(/, and a |, a |and a |a /)
+      .map(x => x.replace(/(-compatible|\.)/g, '').trim())
+      .filter(x => !['', 'nothing relevant'].includes(x))
+      .map(x => x.split(' '))
+  })
 
-/**
+  return [floors, 0]
+};
 
-def correct(floor):
-    if not floor or floor[-1] < 0: # no generators
-        return True
-    return all(-chip in floor for chip in floor if chip < 0)
+var copy = function(state) {
+  return [state.floors.map(floor => floor.slice(0)), state.elevator]
+};
 
-frontier = []
-heapq.heappush(frontier, (0, initial))
-cost_so_far = {initial: 0}
+function isEndState(state) {
+  return state.floors.slice(0, -1).every(floor => floor.length == 0)
+}
 
-while frontier:
-    _, current = heapq.heappop(frontier)
-    floor, floors = current
-    if floor == 3 and all(len(f) == 0 for f in floors[:-1]): # goal!
-        break
+function isValid(state) {
+  return 0 <= state.elevator && state.elevator < state.floors.length && state.floors.every(floor => {
+    let generators = floor.filter(f => f.type == 'generator')
 
-    directions = [dir for dir in (-1, 1) if 0 <= floor + dir < 4]
-    moves = list(combinations(floors[floor], 2)) + list(combinations(floors[floor], 1))
-    for move in moves:
-        for direction in directions:
-            new_floors = list(floors)
-            new_floors[floor] = tuple(x for x in floors[floor] if x not in move)
-            new_floors[floor+direction] = tuple(sorted(floors[floor+direction] + move))
+    return generators.length == 0 || floor.every(f => f.type ==
+      'generator' || generators.some(f => f.el === el))
+  })
+}
 
-            if not correct(new_floors[floor]) or not correct(new_floors[floor+direction]):
-                continue
+function* powerSet(array, n) {
+  if (n == 0 || array.length == 0 || n > array.length) {
+    yield []
+    return
+  }
 
-            next = (floor+direction, tuple(new_floors))
-            new_cost = cost_so_far[current] + 1
-            if next not in cost_so_far or new_cost < cost_so_far[next]:
-                cost_so_far[next] = new_cost
-                priority = new_cost - len(new_floors[3])*10 # silly manually tweakable heuristic factor
-                heapq.heappush(frontier, (priority, next))
+  for (let i = 0; i < array.length - n + 1; i++) {
+    for (let rest of powerSet(array.slice(i + 1), n - 1)) {
+      rest.unshift(array[i])
+      yield rest
+    }
+  }
+}
 
-print(cost_so_far[current], current)
+function* listSteps(state) {
+  let floors = state.floors;
+  let elevator = state.elevator;
 
- */
+  for (let n = 1; n <= 2; n++) {
+    for (let objects of powerSet(floors[elevator], n)) {
+      if (objects.length == 0) continue
+
+      if (objects.length == 2) {
+        let [
+          [a, b],
+          [c, d]
+        ] = objects
+        if (a != c && b != d) continue
+      }
+
+      for (let newElevator = elevator - 1; newElevator <= elevator + 1; newElevator +=
+        2) {
+        if (newElevator < 0 || newElevator >= floors.length)
+          continue
+        if (newElevator < elevator && floors.slice(0, elevator).every(floor =>
+            floor.length == 0))
+          continue
+
+        let newState = copy(state)
+        let [newFloors, ] = newState
+        newState[1] = newElevator
+
+        for (let [el, type] of objects) {
+          let i = newFloors[elevator].findIndex(([x, y]) => x == el && y ==
+            type)
+          newFloors[newElevator].push(...newFloors[elevator].splice(i, 1))
+        }
+
+        newFloors[newElevator].sort()
+
+        if (isValid(newState)) yield newState
+      }
+    }
+  }
+}
+
+function eqClass([floors, elevator]) {
+  let n = floors.reduce((sum, floor) => sum + floor.length, 0) / 2
+  let objects = [...Array(n)].map(_ => Array(2).fill(null))
+  let names = []
+
+  for (let i = 0; i < floors.length; i++) {
+    for (let [el, type] of floors[i]) {
+      let j = names.indexOf(el)
+
+      if (j < 0) {
+        names.push(el)
+        j = names.length - 1
+      }
+
+      objects[j][type == 'generator' ? 0 : 1] = i
+    }
+  }
+
+  return objects.sort().join(';') + ';' + elevator
+}
+
+function bfs(state) {
+  let queue = [state]
+  let key = eqClass(state)
+  let parents = {
+    [key]: null
+  }
+
+  let getPath = function(end) {
+    let path = [end]
+    let key = eqClass(end)
+
+    while (parents[key] != null) {
+      path.push(parents[key])
+      key = eqClass(parents[key])
+    }
+
+    return path.reverse()
+  }
+
+  while (queue.length > 0) {
+    let current = queue.shift()
+
+    if (isEndState(current)) return getPath(current)
+
+    for (let neighbor of listSteps(current)) {
+      let key = eqClass(neighbor)
+      if (key in parents) continue
+      parents[key] = current
+
+      queue.push(neighbor)
+    }
+  }
+
+  return null
+}
+
+
+function part1JS(input) {
+  let state = parse(input)
+  let path = bfs(state)
+  console.log(path.length - 1);
+}
+
+function part2JS(input) {
+  let state = parse(input)
+
+  state[0][0].push(
+    ['elerium', 'generator'], ['elerium', 'microchip'], ['dilithium',
+      'generator'
+    ], ['dilithium', 'microchip']
+  )
+
+  let path = bfs(state)
+  console.log(path.length - 1);
+}
+
+part1JS(input);
+part2JS(input);

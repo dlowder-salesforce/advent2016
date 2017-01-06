@@ -12,17 +12,16 @@ const values = [];
 const output = [];
 for (let line of lines) {
   const bot_rex = /^bot (\d+) gives low to (bot|output) (\d+) and high to (bot|output) (\d+)$/;
-  const val_rex = /^value (\d+) goes to (bot|output) (\d+)$/;
+  const val_rex = /^value (\d+) goes to bot (\d+)$/;
 
   let match;
   if ((match = bot_rex.exec(line))) {
     bots[+match[1]] = {low: [match[2], +match[3]], high: [match[4], +match[5]]};
   } else if ((match = val_rex.exec(line))) {
-    if (!values[+match[3]]) values[+match[3]] = [];
-    values[+match[3]].push(+match[1]);
+    if (!values[+match[2]]) values[+match[2]] = [];
+    values[+match[2]].push(+match[1]);
   }
 }
-
 let special_bin = -1;
 let stop = false;
 while (!stop) {
@@ -62,6 +61,6 @@ while (!stop) {
     values[i] = [];
   }
 }
-
+debugger;
 console.log("Part One: " + special_bin);
 console.log("Part Two: " + output[0][0] * output[1][0] * output[2][0]);
