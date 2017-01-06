@@ -6,9 +6,7 @@ f = open(pathname + '/input03.txt','r')
 input1 = f.read().strip().split('\n')
 
 for i in range(len(input1)):
-    input1[i] = input1[i].strip().split()
-    for j in range(len(input1[i])):
-        input1[i][j] = int(input1[i][j])
+    input1[i] = list(map(int, input1[i].strip().split()))
 
 input2 = []
 j = 0
